@@ -1,0 +1,13 @@
+Role: Senior Full-Stack Engineer
+Task: Build a high-performance, mobile-first sleep optimization PWA using Next.js, Tailwind CSS and Supabase
+
+Required Features:
+- user can set a desired sleep time (t_desired)
+- user inputs time slept at last night (t_curr)
+- based on this, the required bedtime for today, as well as the wake-up time for tomorrow, is calculated 
+  - move time closer to target by 20 min / day
+- track 'social jet lag tax' - discrepancy between weekday and weekend sleep timing. +11% cardiovascular disease risk for every hour over 1 hour
+- track sleep chronotype (lion, bear, wolf) and cicardian period (when is work productive vs not, etc)
+- 20-min slots for sun exposure must be performed after waking up (1-hour window) and in the late afternoon (around 5-7 pm)
+- track countdown for when user needs to stop caffeine (10h before today bedtime) eating/alcohol (3h before) work (2h before) screens (1h before)
+- shower window 90-120 min before
