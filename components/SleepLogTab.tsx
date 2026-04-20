@@ -3,17 +3,14 @@
 import { useState } from 'react';
 import { Moon, Sun, CheckCircle } from 'lucide-react';
 import type { SleepEntry } from '@/types';
-import { hhmmToMinutes, minutesToHHMM } from '@/lib/sleep-calculator';
-import { todayStr } from '@/lib/storage';
+import { hhmmToMinutes, minutesToHHMM, todayStrInTz, yesterdayStrInTz } from '@/lib/sleep-calculator';
 import { useApp } from './AppContext';
 
 export default function SleepLogTab() {
   const { state, logEntry } = useApp();
-  const today = todayStr();
-
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const tz = state.profile?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const today = todayStrInTz(tz);
+  const yesterdayStr = yesterdayStrInTz(tz);
 
   const existing = state.entries.find(e => e.date === yesterdayStr);
 
@@ -54,7 +51,7 @@ export default function SleepLogTab() {
       <div className="space-y-3">
         <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4">
           <label className="flex items-center gap-3">
-            <Moon className="w-5 h-5 text-indigo-400 shrink-0" />
+            <Moon className="w-5 h-5 text-green-400 shrink-0" />
             <div className="flex-1">
               <div className="text-xs text-slate-400 mb-1">I went to bed at</div>
               <input
@@ -108,7 +105,7 @@ export default function SleepLogTab() {
                     {d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                   </span>
                   <div className="flex items-center gap-3 text-sm">
-                    <span className="text-indigo-300 font-mono">{minutesToHHMM(e.bedtime)}</span>
+                    <span className="text-green-300 font-mono">{minutesToHHMM(e.bedtime)}</span>
                     <span className="text-slate-600">→</span>
                     <span className="text-amber-300 font-mono">{minutesToHHMM(e.wakeTime)}</span>
                     <span className={`font-mono font-semibold ${Math.round(dur * 10) / 10 >= 7 ? 'text-emerald-400' : 'text-amber-400'}`}>
@@ -127,7 +124,7 @@ export default function SleepLogTab() {
         className={`w-full py-4 rounded-xl font-semibold text-sm transition-all ${
           saved
             ? 'bg-emerald-600 text-white'
-            : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+            : 'bg-green-600 hover:bg-green-500 text-white'
         }`}
       >
         {saved ? (

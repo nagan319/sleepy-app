@@ -1,5 +1,39 @@
 import type { SleepProfile, SleepEntry, DaySchedule, SocialJetLag } from '@/types';
 
+// ── Timezone-aware time helpers ──────────────────────────────────────────────
+
+export function nowMinutesInTz(tz: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, hour: 'numeric', minute: 'numeric', hour12: false,
+  }).formatToParts(new Date());
+  const h = parseInt(parts.find(p => p.type === 'hour')!.value);
+  const m = parseInt(parts.find(p => p.type === 'minute')!.value);
+  return (h === 24 ? 0 : h) * 60 + m;
+}
+
+export function todayStrInTz(tz: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
+}
+
+export function yesterdayStrInTz(tz: string): string {
+  const today = todayStrInTz(tz);
+  const d = new Date(today + 'T12:00:00Z');
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split('T')[0];
+}
+
+export function hourInTz(tz: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, hour: 'numeric', hour12: false,
+  }).formatToParts(new Date());
+  const h = parseInt(parts.find(p => p.type === 'hour')!.value);
+  return h === 24 ? 0 : h;
+}
+
+// ── Plain time formatting ────────────────────────────────────────────────────
+
 export function minutesToHHMM(minutes: number): string {
   const normalized = ((minutes % 1440) + 1440) % 1440;
   const h = Math.floor(normalized / 60);
@@ -21,11 +55,10 @@ export function formatTime12h(minutes: number): string {
   return `${displayH}:${m.toString().padStart(2, '0')} ${period}`;
 }
 
-export function minutesUntil(targetMinutes: number): number {
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+export function minutesUntil(targetMinutes: number, tz: string): number {
+  const nowMinutes = nowMinutesInTz(tz);
   let diff = targetMinutes - nowMinutes;
-  if (diff < -720) diff += 1440; // handle crossing midnight
+  if (diff < -720) diff += 1440;
   return diff;
 }
 
@@ -37,6 +70,8 @@ export function formatCountdown(totalMinutes: number): string {
   return `${h}h ${m}m`;
 }
 
+// ── Schedule calculation ─────────────────────────────────────────────────────
+
 export function moveBedtimeTowardTarget(current: number, target: number, stepMinutes = 20): number {
   const diff = target - current;
   if (Math.abs(diff) <= stepMinutes) return target;
@@ -44,13 +79,9 @@ export function moveBedtimeTowardTarget(current: number, target: number, stepMin
 }
 
 export function buildDaySchedule(profile: SleepProfile, lastEntry: SleepEntry | null): DaySchedule {
-  let recommendedBedtime: number;
-
-  if (!lastEntry) {
-    recommendedBedtime = profile.targetBedtime;
-  } else {
-    recommendedBedtime = moveBedtimeTowardTarget(lastEntry.bedtime, profile.targetBedtime);
-  }
+  const recommendedBedtime = lastEntry
+    ? moveBedtimeTowardTarget(lastEntry.bedtime, profile.targetBedtime)
+    : profile.targetBedtime;
 
   const sleepDurationMins = profile.sleepDuration * 60;
   const recommendedWakeTime = (recommendedBedtime + sleepDurationMins) % 1440;
@@ -58,22 +89,25 @@ export function buildDaySchedule(profile: SleepProfile, lastEntry: SleepEntry | 
   return {
     recommendedBedtime,
     recommendedWakeTime,
-    caffeineStop: ((recommendedBedtime - 600) + 1440) % 1440,
-    eatStop: ((recommendedBedtime - 180) + 1440) % 1440,
-    workStop: ((recommendedBedtime - 120) + 1440) % 1440,
-    screenStop: ((recommendedBedtime - 60) + 1440) % 1440,
-    showerStart: ((recommendedBedtime - 120) + 1440) % 1440,
-    showerEnd: ((recommendedBedtime - 90) + 1440) % 1440,
+    caffeineStop:  ((recommendedBedtime - 600)  + 1440) % 1440,
+    eatStop:       ((recommendedBedtime - 180)  + 1440) % 1440,
+    workStop:      ((recommendedBedtime - 120)  + 1440) % 1440,
+    screenStop:    ((recommendedBedtime - 60)   + 1440) % 1440,
+    showerStart:   ((recommendedBedtime - 120)  + 1440) % 1440,
+    showerEnd:     ((recommendedBedtime - 90)   + 1440) % 1440,
     sunMorningStart: recommendedWakeTime,
-    sunMorningEnd: (recommendedWakeTime + 60) % 1440,
-    sunAfternoonStart: 17 * 60, // 5:00 PM
-    sunAfternoonEnd: 19 * 60,   // 7:00 PM
+    sunMorningEnd:   (recommendedWakeTime + 60) % 1440,
+    sunAfternoonStart: 17 * 60,
+    sunAfternoonEnd:   19 * 60,
   };
 }
 
+// ── Social jet lag ───────────────────────────────────────────────────────────
+
 function isWeekend(dateStr: string): boolean {
-  const d = new Date(dateStr + 'T12:00:00');
-  return d.getDay() === 0 || d.getDay() === 6;
+  // Parse as UTC noon so weekday is stable across timezones
+  const d = new Date(dateStr + 'T12:00:00Z');
+  return d.getUTCDay() === 0 || d.getUTCDay() === 6;
 }
 
 function circularMean(angles: number[]): number {
@@ -86,7 +120,7 @@ function circularMean(angles: number[]): number {
 
 export function calcSocialJetLag(entries: SleepEntry[]): SocialJetLag {
   const weekdayBedtimes = entries.filter(e => !isWeekend(e.date)).map(e => e.bedtime);
-  const weekendBedtimes = entries.filter(e => isWeekend(e.date)).map(e => e.bedtime);
+  const weekendBedtimes = entries.filter(e =>  isWeekend(e.date)).map(e => e.bedtime);
 
   if (weekdayBedtimes.length === 0 || weekendBedtimes.length === 0) {
     return { weekdayAvgBedtime: null, weekendAvgBedtime: null, lagHours: null, cvdRiskIncrease: null };
@@ -99,23 +133,10 @@ export function calcSocialJetLag(entries: SleepEntry[]): SocialJetLag {
   if (lagMinutes > 720) lagMinutes = 1440 - lagMinutes;
   const lagHours = lagMinutes / 60;
 
-  const excessHours = Math.max(0, lagHours - 1);
-  const cvdRiskIncrease = excessHours * 11;
-
   return {
     weekdayAvgBedtime: weekdayAvg,
     weekendAvgBedtime: weekendAvg,
     lagHours,
-    cvdRiskIncrease,
+    cvdRiskIncrease: Math.max(0, lagHours - 1) * 11,
   };
-}
-
-export function getProgressToTarget(entries: SleepEntry[], targetBedtime: number): number {
-  if (entries.length === 0) return 0;
-  const latest = entries[entries.length - 1];
-  const initial = entries[0];
-  const totalDiff = Math.abs(initial.bedtime - targetBedtime);
-  if (totalDiff === 0) return 100;
-  const remaining = Math.abs(latest.bedtime - targetBedtime);
-  return Math.round(((totalDiff - remaining) / totalDiff) * 100);
 }

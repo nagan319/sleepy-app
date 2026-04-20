@@ -17,7 +17,7 @@ export default function StatsTab() {
 
   return (
     <div className="px-4 md:px-8 py-6">
-      <h2 className="text-xl font-bold text-slate-100 mb-6">Insights</h2>
+      <h2 className="text-xl font-bold text-slate-100 mb-6">insights ✨</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
       {/* Current zone */}
@@ -39,14 +39,14 @@ export default function StatsTab() {
 
         {!hasEnoughData ? (
           <div className="text-sm text-slate-400">
-            Log at least one weekday and one weekend night to see your social jet lag score.
+            log a weekday and a weekend night to see how consistent your schedule is 🌙
           </div>
         ) : (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-slate-700/40 rounded-lg p-3">
                 <div className="text-xs text-slate-400 mb-1">Weekday avg</div>
-                <div className="text-lg font-mono font-semibold text-indigo-300">
+                <div className="text-lg font-mono font-semibold text-green-300">
                   {formatTime12h(jetLag.weekdayAvgBedtime!)}
                 </div>
               </div>
@@ -78,7 +78,7 @@ export default function StatsTab() {
                 <div className="mt-2 flex items-center gap-1.5">
                   <Heart className="w-3.5 h-3.5 text-rose-400" />
                   <span className="text-xs text-rose-300">
-                    +{jetLag.cvdRiskIncrease!.toFixed(0)}% cardiovascular disease risk
+                    +{jetLag.cvdRiskIncrease!.toFixed(0)}% heart health risk
                   </span>
                 </div>
               )}

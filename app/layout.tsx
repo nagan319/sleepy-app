@@ -6,9 +6,9 @@ const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'SleepSync',
-  description: 'Sleep optimization powered by chronobiology',
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'SleepSync' },
+  title: 'sleepy',
+  description: 'sleep helper',
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'sleepy' },
 };
 
 export const viewport: Viewport = {
@@ -16,7 +16,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#020617',
+  themeColor: '#0c110e',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

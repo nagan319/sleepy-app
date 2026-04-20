@@ -2,8 +2,9 @@ export type Chronotype = 'lion' | 'bear' | 'wolf';
 
 export interface SleepProfile {
   chronotype: Chronotype;
-  targetBedtime: number; // minutes since midnight
+  targetBedtime: number; // minutes since midnight in profile timezone
   sleepDuration: number; // hours (7-9)
+  timezone: string;      // IANA timezone, e.g. "America/New_York"
 }
 
 export interface SleepEntry {

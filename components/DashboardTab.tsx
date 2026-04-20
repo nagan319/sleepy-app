@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Moon, Sun, Coffee, UtensilsCrossed, Monitor, Briefcase, Droplets, CheckSquare, Square, Target, Zap } from 'lucide-react';
-import { buildDaySchedule, formatTime12h, minutesUntil, formatCountdown } from '@/lib/sleep-calculator';
-import { getLastEntry, todayStr } from '@/lib/storage';
+import { buildDaySchedule, formatTime12h, minutesUntil, formatCountdown, todayStrInTz, hourInTz } from '@/lib/sleep-calculator';
+import { getLastEntry } from '@/lib/storage';
 import { CHRONOTYPES, getCurrentZone } from '@/lib/chronotype';
 import { useApp } from './AppContext';
 
@@ -30,7 +30,8 @@ export default function DashboardTab() {
 
   if (!state.profile) return null;
 
-  const today = todayStr();
+  const tz = state.profile.timezone;
+  const today = todayStrInTz(tz);
   const lastEntry = getLastEntry(state.entries);
   const schedule = buildDaySchedule(state.profile, lastEntry);
   const ct = CHRONOTYPES[state.profile.chronotype];
@@ -38,7 +39,8 @@ export default function DashboardTab() {
   const sunToday = state.sunExposureDone[today] || { morning: false, afternoon: false };
 
   const now = new Date();
-  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening';
+  const h = hourInTz(tz);
+  const greeting = h < 12 ? 'good morning ☀️' : h < 17 ? 'good afternoon 🌿' : 'good evening 🌙';
 
   const countdownItems: CountdownItem[] = [
     {
@@ -129,15 +131,15 @@ export default function DashboardTab() {
         <div className="space-y-4">
 
           {/* Bedtime card */}
-          <div className="bg-gradient-to-br from-indigo-950/80 to-slate-900 border border-indigo-700/30 rounded-2xl p-5">
+          <div className="bg-gradient-to-br from-green-950/80 to-slate-900 border border-green-700/30 rounded-2xl p-5">
             <div className="flex justify-between items-start">
               <div>
-                <div className="text-xs text-indigo-300/70 font-medium uppercase tracking-wider mb-1">Tonight&apos;s bedtime</div>
-                <div className="text-4xl md:text-5xl font-bold font-mono text-indigo-100">
+                <div className="text-xs text-green-300/70 font-medium uppercase tracking-wider mb-1">Tonight&apos;s bedtime</div>
+                <div className="text-4xl md:text-5xl font-bold font-mono text-green-100">
                   {formatTime12h(schedule.recommendedBedtime)}
                 </div>
                 {lastEntry && (
-                  <div className="text-xs text-indigo-300/60 mt-1.5">
+                  <div className="text-xs text-green-300/60 mt-1.5">
                     {lastEntry.bedtime > state.profile.targetBedtime
                       ? `Shifting 20 min earlier → ${formatTime12h(state.profile.targetBedtime)}`
                       : lastEntry.bedtime < state.profile.targetBedtime
@@ -156,16 +158,16 @@ export default function DashboardTab() {
             </div>
             <div className="mt-5">
               <div className="flex items-center gap-2 mb-1.5">
-                <Target className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="text-xs text-indigo-300/70">Target: {formatTime12h(state.profile.targetBedtime)}</span>
+                <Target className="w-3.5 h-3.5 text-green-400" />
+                <span className="text-xs text-green-300/70">Target: {formatTime12h(state.profile.targetBedtime)}</span>
               </div>
               <div className="h-1.5 bg-slate-700/60 rounded-full overflow-hidden">
                 {(() => {
-                  if (!lastEntry) return <div className="h-full w-0 bg-indigo-500 rounded-full" />;
+                  if (!lastEntry) return <div className="h-full w-0 bg-green-500 rounded-full" />;
                   const diff = Math.abs(schedule.recommendedBedtime - state.profile.targetBedtime);
                   const maxDiff = 4 * 60;
                   const pct = Math.max(0, Math.min(100, (1 - diff / maxDiff) * 100));
-                  return <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${pct}%` }} />;
+                  return <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${pct}%` }} />;
                 })()}
               </div>
             </div>
@@ -178,7 +180,7 @@ export default function DashboardTab() {
               <h3 className="text-sm font-semibold text-slate-200">Shower Window</h3>
             </div>
             <p className="text-xs text-slate-400 mb-3">
-              A warm shower 90–120 min before bed accelerates the body temp drop that triggers sleepiness.
+              A warm shower 90–120 min before bed helps your body cool down and get sleepy faster 🚿
             </p>
             <div className="flex items-center gap-3">
               <div className="flex-1 bg-slate-700/40 rounded-lg p-2.5 text-center">
@@ -215,7 +217,7 @@ export default function DashboardTab() {
             </div>
             <div>
               {countdownItems.map(item => (
-                <CountdownRow key={item.id} item={item} tick={tick} />
+                <CountdownRow key={item.id} item={item} tick={tick} tz={tz} />
               ))}
             </div>
           </div>
@@ -281,9 +283,9 @@ function SunSlot({ label, time, done, onToggle }: { label: string; time: string;
   );
 }
 
-function CountdownRow({ item, tick }: { item: CountdownItem; tick: number }) {
+function CountdownRow({ item, tick, tz }: { item: CountdownItem; tick: number; tz: string }) {
   void tick;
-  const remaining = minutesUntil(item.targetMinutes);
+  const remaining = minutesUntil(item.targetMinutes, tz);
   const isPast = remaining <= 0;
   const isUrgent = !isPast && remaining <= item.urgentThreshold;
   const isWarn = !isPast && !isUrgent && remaining <= item.warnThreshold;

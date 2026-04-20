@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Home, PenLine, BarChart2, Settings, Moon, Cloud } from 'lucide-react';
+import { Home, PenLine, BarChart2, Settings, Moon, Cloud, LogOut } from 'lucide-react';
 import { AppProvider, useApp } from '@/components/AppContext';
+import AuthScreen from '@/components/AuthScreen';
 import SetupFlow from '@/components/SetupFlow';
 import DashboardTab from '@/components/DashboardTab';
 import SleepLogTab from '@/components/SleepLogTab';
@@ -20,12 +21,23 @@ const NAV_ITEMS = [
 ];
 
 function AppShell() {
-  const { state, syncing } = useApp();
+  const { session, sessionLoading, state, syncing, signOut } = useApp();
   const [tab, setTab] = useState<Tab>('home');
 
-  if (!state.profile) {
-    return <SetupFlow />;
+  // Spinner while resolving session
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Moon className="w-8 h-8 text-green-400 animate-pulse" />
+      </div>
+    );
   }
+
+  // No session → sign in
+  if (!session) return <AuthScreen />;
+
+  // Signed in but not set up → onboarding
+  if (!state.profile) return <SetupFlow />;
 
   const ct = CHRONOTYPES[state.profile.chronotype];
 
@@ -33,15 +45,13 @@ function AppShell() {
     <div className="min-h-screen md:flex">
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex md:flex-col md:w-56 md:shrink-0 bg-slate-900 border-r border-slate-800/80 sticky top-0 h-screen">
-        {/* Brand */}
         <div className="flex items-center gap-2.5 px-5 py-5 border-b border-slate-800/80">
-          <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center shrink-0">
-            <Moon className="w-4 h-4 text-indigo-400" />
+          <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0">
+            <Moon className="w-4 h-4 text-green-400" />
           </div>
-          <span className="font-semibold text-slate-100 text-base tracking-tight">SleepSync</span>
+          <span className="font-semibold text-slate-100 text-base tracking-tight">sleepy</span>
         </div>
 
-        {/* Nav items */}
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {NAV_ITEMS.map(({ id, icon: Icon, label }) => (
             <button
@@ -49,7 +59,7 @@ function AppShell() {
               onClick={() => setTab(id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
                 tab === id
-                  ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/20'
+                  ? 'bg-green-500/15 text-green-300 border border-green-500/20'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
               }`}
             >
@@ -59,15 +69,13 @@ function AppShell() {
           ))}
         </nav>
 
-        {/* Sync indicator */}
         {syncing && (
-          <div className="px-4 py-2 flex items-center gap-1.5 text-xs text-slate-500">
+          <div className="px-5 py-2 flex items-center gap-1.5 text-xs text-slate-500">
             <Cloud className="w-3.5 h-3.5 animate-pulse" /> Syncing…
           </div>
         )}
 
-        {/* Chronotype chip */}
-        <div className="px-4 pb-5">
+        <div className="px-4 pb-2">
           <div className={`rounded-xl p-3 border ${ct.bgColor}`}>
             <div className="text-xs text-slate-500 mb-1">Chronotype</div>
             <div className="flex items-center gap-2">
@@ -76,6 +84,17 @@ function AppShell() {
             </div>
             <div className="text-xs text-slate-500 mt-1 leading-tight">{ct.peakProductivity}</div>
           </div>
+        </div>
+
+        {/* Account */}
+        <div className="px-4 pb-5 pt-1">
+          <div className="text-xs text-slate-600 truncate mb-1.5 px-1">{session.user.email}</div>
+          <button
+            onClick={signOut}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" /> Sign out
+          </button>
         </div>
       </aside>
 
@@ -97,7 +116,7 @@ function AppShell() {
               key={id}
               onClick={() => setTab(id)}
               className={`flex-1 flex flex-col items-center gap-1 py-3 transition-colors ${
-                tab === id ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-300'
+                tab === id ? 'text-green-400' : 'text-slate-500 hover:text-slate-300'
               }`}
             >
               <Icon className="w-5 h-5" />

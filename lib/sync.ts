@@ -1,21 +1,8 @@
 import { supabase } from './supabase';
 import type { AppState } from '@/types';
 
-const DEVICE_ID_KEY = 'sleep-app-device-id';
-
-export function getDeviceId(): string {
-  if (typeof window === 'undefined') return '';
-  let id = localStorage.getItem(DEVICE_ID_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(DEVICE_ID_KEY, id);
-  }
-  return id;
-}
-
-export async function pushToSupabase(state: AppState): Promise<void> {
-  if (!supabase) return;
-  const userId = getDeviceId();
+export async function pushToSupabase(state: AppState, userId: string): Promise<void> {
+  if (!supabase || !userId) return;
 
   const profilePromise = state.profile
     ? supabase.from('sleep_profiles').upsert({
@@ -23,6 +10,7 @@ export async function pushToSupabase(state: AppState): Promise<void> {
         chronotype: state.profile.chronotype,
         target_bedtime: state.profile.targetBedtime,
         sleep_duration: state.profile.sleepDuration,
+        timezone: state.profile.timezone,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
     : Promise.resolve();
@@ -52,9 +40,8 @@ export async function pushToSupabase(state: AppState): Promise<void> {
   ]);
 }
 
-export async function pullFromSupabase(): Promise<Partial<AppState> | null> {
-  if (!supabase) return null;
-  const userId = getDeviceId();
+export async function pullFromSupabase(userId: string): Promise<Partial<AppState> | null> {
+  if (!supabase || !userId) return null;
 
   const [profileRes, entriesRes, sunRes] = await Promise.all([
     supabase.from('sleep_profiles').select('*').eq('user_id', userId).maybeSingle(),
@@ -69,6 +56,7 @@ export async function pullFromSupabase(): Promise<Partial<AppState> | null> {
         chronotype: profileRes.data.chronotype,
         targetBedtime: profileRes.data.target_bedtime,
         sleepDuration: profileRes.data.sleep_duration,
+        timezone: profileRes.data.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
       }
     : null;
 

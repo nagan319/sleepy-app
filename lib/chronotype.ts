@@ -6,6 +6,7 @@ export interface ChronotypeInfo {
   emoji: string;
   description: string;
   naturalWake: string;
+  naturalSleep: string;
   peakProductivity: string;
   peakCreativity: string;
   lowEnergy: string;
@@ -20,8 +21,9 @@ export const CHRONOTYPES: Record<Chronotype, ChronotypeInfo> = {
     id: 'lion',
     name: 'Lion',
     emoji: '🦁',
-    description: 'Early riser with natural discipline. Peaks in the morning and fades early evening.',
+    description: 'Up before everyone else. Morning is your golden hour — you earn your rest early.',
     naturalWake: '5:00–6:30 AM',
+    naturalSleep: '9:00–10:00 PM',
     peakProductivity: '8:00 AM – 12:00 PM',
     peakCreativity: '6:00 AM – 9:00 AM',
     lowEnergy: '3:00 PM – 5:00 PM',
@@ -34,22 +36,24 @@ export const CHRONOTYPES: Record<Chronotype, ChronotypeInfo> = {
     id: 'bear',
     name: 'Bear',
     emoji: '🐻',
-    description: 'Most common type. Sleep/wake aligned with the solar cycle. Balanced energy throughout the day.',
+    description: 'The cozy middle ground. You follow the sun — steady, reliable, happiest with a good routine.',
     naturalWake: '7:00–8:00 AM',
+    naturalSleep: '11:00 PM – 12:00 AM',
     peakProductivity: '10:00 AM – 2:00 PM',
     peakCreativity: '9:00 AM – 11:00 AM',
     lowEnergy: '2:00 PM – 4:00 PM',
     caffeineAdvice: 'Last caffeine by 2:00 PM',
     exerciseTiming: 'Mid-morning or early afternoon (10 AM–2 PM)',
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-500/10 border-blue-500/20',
+    color: 'text-green-400',
+    bgColor: 'bg-green-500/10 border-green-500/20',
   },
   wolf: {
     id: 'wolf',
     name: 'Wolf',
     emoji: '🐺',
-    description: 'Night owl. Struggles to wake early but reaches full potential in the afternoon and evening.',
+    description: 'Night owl with a slow start. You come alive in the afternoon — your best ideas happen after dark.',
     naturalWake: '9:00–10:00 AM',
+    naturalSleep: '12:00–1:00 AM',
     peakProductivity: '12:00 PM – 6:00 PM',
     peakCreativity: '4:00 PM – 9:00 PM',
     lowEnergy: '8:00 AM – 11:00 AM',

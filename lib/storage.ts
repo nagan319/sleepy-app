@@ -54,8 +54,11 @@ export function markSunExposure(date: string, slot: 'morning' | 'afternoon', don
   return next;
 }
 
-export function todayStr(): string {
-  return new Date().toISOString().split('T')[0];
+export function todayStr(tz?: string): string {
+  if (!tz) return new Date().toISOString().split('T')[0];
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
 }
 
 export function getLastEntry(entries: SleepEntry[]): SleepEntry | null {

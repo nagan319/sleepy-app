@@ -2,13 +2,13 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'SleepSync',
-    short_name: 'SleepSync',
-    description: 'Sleep optimization powered by chronobiology',
+    name: 'sleepy',
+    short_name: 'sleepy',
+    description: 'sleep helper',
     start_url: '/',
     display: 'standalone',
-    background_color: '#020617',
-    theme_color: '#020617',
+    background_color: '#0c110e',
+    theme_color: '#0c110e',
     orientation: 'portrait',
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
