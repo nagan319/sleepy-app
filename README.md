@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# sleepy
 
-## Getting Started
+A sleep optimization app that helps you shift your sleep schedule toward a target bedtime, track sun exposure, and understand your chronotype.
 
-First, run the development server:
+**Live app: https://sleep-app-swart.vercel.app**
+
+## Features
+
+- **Bedtime targeting** — set a goal bedtime and shift 30 min/day toward it based on your actual sleep logs
+- **Chronotype tracking** — lion, bear, or wolf; shows your current circadian zone throughout the day
+- **Countdown timers** — caffeine cutoff, last meal, stop work, shower window, no screens
+- **Sun exposure** — morning and afternoon 20-min slots with daily checkboxes
+- **Sleep log** — log bedtime and wake time each day, delete old entries, view history
+- **Social jet lag** — tracks weekday vs weekend sleep variance
+- **Real-time sync** — changes sync instantly across all devices and sessions
+- **PWA** — installable on mobile (add to home screen)
+
+## Stack
+
+- **Frontend** — Next.js 16, React 19, Tailwind CSS v4
+- **Backend** — Supabase (Postgres + Auth + Realtime)
+- **Hosting** — Vercel
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Required `.env.local`:
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Run `supabase/schema.sql` in your Supabase SQL Editor.
