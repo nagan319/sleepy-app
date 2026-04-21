@@ -22,11 +22,11 @@ const NAV_ITEMS = [
 ];
 
 function AppShell() {
-  const { session, sessionLoading, hydrating, passwordRecovery, state, syncing, signOut } = useApp();
+  const { session, sessionLoading, passwordRecovery, state, syncing, signOut } = useApp();
   const [tab, setTab] = useState<Tab>('home');
 
   // Spinner while resolving session or fetching remote profile
-  if (sessionLoading || hydrating) {
+  if (sessionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Moon className="w-8 h-8 text-green-400 animate-pulse" />
