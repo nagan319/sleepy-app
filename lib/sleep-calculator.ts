@@ -72,16 +72,32 @@ export function formatCountdown(totalMinutes: number): string {
 
 // ── Schedule calculation ─────────────────────────────────────────────────────
 
-export function moveBedtimeTowardTarget(current: number, target: number, stepMinutes = 20): number {
-  const diff = target - current;
+export function moveBedtimeTowardTarget(current: number, target: number, stepMinutes = 30): number {
+  let diff = target - current;
+  // Take the shorter arc around the clock (e.g. 2 AM → 10 PM goes backward, not forward)
+  if (diff > 720) diff -= 1440;
+  if (diff < -720) diff += 1440;
   if (Math.abs(diff) <= stepMinutes) return target;
-  return current + Math.sign(diff) * stepMinutes;
+  return ((current + Math.sign(diff) * stepMinutes) + 1440) % 1440;
 }
 
-export function buildDaySchedule(profile: SleepProfile, lastEntry: SleepEntry | null): DaySchedule {
-  const recommendedBedtime = lastEntry
-    ? moveBedtimeTowardTarget(lastEntry.bedtime, profile.targetBedtime)
-    : profile.targetBedtime;
+function daysBetween(dateA: string, dateB: string): number {
+  const a = new Date(dateA + 'T12:00:00Z').getTime();
+  const b = new Date(dateB + 'T12:00:00Z').getTime();
+  return Math.round((b - a) / 86400000);
+}
+
+export function buildDaySchedule(profile: SleepProfile, lastEntry: SleepEntry | null, yesterdayStr?: string): DaySchedule {
+  let recommendedBedtime: number;
+  if (lastEntry) {
+    const gap = yesterdayStr ? daysBetween(lastEntry.date, yesterdayStr) : 1;
+    const shifts = Math.max(1, Math.min(gap + 1, 14)); // cap at 14 days
+    let bed = lastEntry.bedtime;
+    for (let i = 0; i < shifts; i++) bed = moveBedtimeTowardTarget(bed, profile.targetBedtime);
+    recommendedBedtime = bed;
+  } else {
+    recommendedBedtime = profile.targetBedtime;
+  }
 
   const sleepDurationMins = profile.sleepDuration * 60;
   const recommendedWakeTime = (recommendedBedtime + sleepDurationMins) % 1440;

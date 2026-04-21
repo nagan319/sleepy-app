@@ -40,6 +40,13 @@ export function addEntry(entry: SleepEntry): AppState {
   return next;
 }
 
+export function deleteEntry(date: string): AppState {
+  const state = loadState();
+  const next = { ...state, entries: state.entries.filter(e => e.date !== date) };
+  saveState(next);
+  return next;
+}
+
 export function markSunExposure(date: string, slot: 'morning' | 'afternoon', done: boolean): AppState {
   const state = loadState();
   const existing = state.sunExposureDone[date] || { morning: false, afternoon: false };

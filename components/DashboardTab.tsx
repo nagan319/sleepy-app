@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Moon, Sun, Coffee, UtensilsCrossed, Monitor, Briefcase, Droplets, CheckSquare, Square, Target, Zap } from 'lucide-react';
-import { buildDaySchedule, formatTime12h, minutesUntil, formatCountdown, todayStrInTz, hourInTz } from '@/lib/sleep-calculator';
+import { buildDaySchedule, formatTime12h, minutesUntil, formatCountdown, todayStrInTz, yesterdayStrInTz, hourInTz, hhmmToMinutes } from '@/lib/sleep-calculator';
 import { getLastEntry } from '@/lib/storage';
 import { CHRONOTYPES, getCurrentZone } from '@/lib/chronotype';
 import { useApp } from './AppContext';
@@ -19,9 +19,10 @@ interface CountdownItem {
   urgentColor: string;
 }
 
-export default function DashboardTab() {
-  const { state, toggleSun } = useApp();
+export default function DashboardTab({ onNavigateToLog }: { onNavigateToLog: () => void }) {
+  const { state, toggleSun, logEntry } = useApp();
   const [tick, setTick] = useState(0);
+  const [reminderDismissed, setReminderDismissed] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 60000);
@@ -32,8 +33,10 @@ export default function DashboardTab() {
 
   const tz = state.profile.timezone;
   const today = todayStrInTz(tz);
+  const yesterday = yesterdayStrInTz(tz);
   const lastEntry = getLastEntry(state.entries);
-  const schedule = buildDaySchedule(state.profile, lastEntry);
+  const missedLastNight = !reminderDismissed && lastEntry?.date !== yesterday;
+  const schedule = buildDaySchedule(state.profile, lastEntry, yesterday);
   const ct = CHRONOTYPES[state.profile.chronotype];
   const zone = getCurrentZone(state.profile.chronotype);
   const sunToday = state.sunExposureDone[today] || { morning: false, afternoon: false };
@@ -100,8 +103,42 @@ export default function DashboardTab() {
     },
   ];
 
+  function handleSetToTarget() {
+    logEntry({ date: yesterday, bedtime: state.profile!.targetBedtime, wakeTime: hhmmToMinutes('07:00') });
+    setReminderDismissed(true);
+  }
+
   return (
     <div className="px-4 md:px-8 py-6">
+      {/* ── Missed log reminder ── */}
+      {missedLastNight && (
+        <div className="mb-5 flex items-start gap-3 bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3">
+          <span className="text-amber-400 text-base shrink-0 mt-0.5">!</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-amber-200 font-medium">Log last night for a more accurate target</p>
+            <p className="text-xs text-amber-300/60 mt-0.5">
+              {lastEntry
+                ? `Last log was ${lastEntry.date} — bedtime is estimated from there`
+                : 'No sleep logged yet — using your target bedtime'}
+            </p>
+            <div className="flex gap-3 mt-2.5">
+              <button
+                onClick={onNavigateToLog}
+                className="text-xs font-semibold text-amber-300 hover:text-amber-200 transition-colors"
+              >
+                Log last night →
+              </button>
+              <button
+                onClick={handleSetToTarget}
+                className="text-xs text-amber-400/60 hover:text-amber-300 transition-colors"
+              >
+                Set to target time
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -141,9 +178,9 @@ export default function DashboardTab() {
                 {lastEntry && (
                   <div className="text-xs text-green-300/60 mt-1.5">
                     {lastEntry.bedtime > state.profile.targetBedtime
-                      ? `Shifting 20 min earlier → ${formatTime12h(state.profile.targetBedtime)}`
+                      ? `Shifting 30 min earlier → ${formatTime12h(state.profile.targetBedtime)}`
                       : lastEntry.bedtime < state.profile.targetBedtime
-                      ? `Shifting 20 min later → ${formatTime12h(state.profile.targetBedtime)}`
+                      ? `Shifting 30 min later → ${formatTime12h(state.profile.targetBedtime)}`
                       : 'On target!'}
                   </div>
                 )}

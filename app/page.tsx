@@ -5,6 +5,7 @@ import { Home, PenLine, BarChart2, Settings, Moon, Cloud, LogOut } from 'lucide-
 import { AppProvider, useApp } from '@/components/AppContext';
 import AuthScreen from '@/components/AuthScreen';
 import SetupFlow from '@/components/SetupFlow';
+import SetNewPasswordScreen from '@/components/SetNewPasswordScreen';
 import DashboardTab from '@/components/DashboardTab';
 import SleepLogTab from '@/components/SleepLogTab';
 import StatsTab from '@/components/StatsTab';
@@ -21,7 +22,7 @@ const NAV_ITEMS = [
 ];
 
 function AppShell() {
-  const { session, sessionLoading, state, syncing, signOut } = useApp();
+  const { session, sessionLoading, passwordRecovery, state, syncing, signOut } = useApp();
   const [tab, setTab] = useState<Tab>('home');
 
   // Spinner while resolving session
@@ -35,6 +36,9 @@ function AppShell() {
 
   // No session → sign in
   if (!session) return <AuthScreen />;
+
+  // Password recovery flow (forgot password link clicked)
+  if (passwordRecovery) return <SetNewPasswordScreen onDone={() => {}} />;
 
   // Signed in but not set up → onboarding
   if (!state.profile) return <SetupFlow />;
@@ -101,7 +105,7 @@ function AppShell() {
       {/* ── Content ── */}
       <main className="flex-1 min-w-0 overflow-y-auto pb-20 md:pb-0 md:max-h-screen">
         <div className="mx-auto md:max-w-5xl">
-          {tab === 'home' && <DashboardTab />}
+          {tab === 'home' && <DashboardTab onNavigateToLog={() => setTab('log')} />}
           {tab === 'log' && <SleepLogTab />}
           {tab === 'stats' && <StatsTab />}
           {tab === 'settings' && <SettingsTab />}
