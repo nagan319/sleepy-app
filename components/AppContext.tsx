@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 interface AppContextValue {
   session: Session | null;
   sessionLoading: boolean;
+  hydrating: boolean;
   passwordRecovery: boolean;
   state: AppState;
   syncing: boolean;
@@ -28,6 +29,7 @@ const EMPTY_STATE: AppState = { profile: null, entries: [], sunExposureDone: {} 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
+  const [hydrating, setHydrating] = useState(false);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [state, setState] = useState<AppState>(EMPTY_STATE);
   const [syncing, setSyncing] = useState(false);
@@ -35,10 +37,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   async function hydrateFromRemote(userId: string) {
+    setHydrating(true);
     const local = loadState();
     setState(local);
 
     const remote = await pullFromSupabase(userId);
+    setHydrating(false);
     if (!remote) return;
 
     const mergedEntries = [...(local.entries ?? [])];
@@ -224,7 +228,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AppContext.Provider value={{ session, sessionLoading, passwordRecovery, state, syncing, setProfile, logEntry, toggleSun, removeEntry, signOut, resetLocalData }}>
+    <AppContext.Provider value={{ session, sessionLoading, hydrating, passwordRecovery, state, syncing, setProfile, logEntry, toggleSun, removeEntry, signOut, resetLocalData }}>
       {children}
     </AppContext.Provider>
   );
